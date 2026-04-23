@@ -1,9 +1,5 @@
-import os
-os.system("sudo pigpiod")
-
+from gpiozero import Button, RGBLED
 import time
-import sys
-import pigpio
 
 PIN_BTN  = 14
 PIN_LEDR = 16
@@ -11,59 +7,37 @@ PIN_LEDG = 20
 PIN_LEDB = 21
 
 LOOP_PERIOD_MS = 2000
-
 led_color = 0
-last_tick = 0
 
-def myISR(gpio, level, tick):
-    global led_color, last_tick
+# 1. LED Setup: active_high=False (Circuit turns on at LOW signal)
+led = RGBLED(red=PIN_LEDR, green=PIN_LEDG, blue=PIN_LEDB, active_high=False)
+# Initial state: Turn off all LEDs
+led.off()
 
-    ## If it is not a button press
-    if level != 0:
-        return
-    # Debouncing: Ignore if within 200ms of the last press
-    if pigpio.tickDiff(last_tick, tick) < 200_000:
-        return
-    last_tick = tick
+# 2. Button Setup: Internal pull-up (pull_up=True), 200ms debouncing (bounce_time=0.2)
+btn = Button(PIN_BTN, pull_up=True, bounce_time=0.2)
 
-    # Check button status
-    btn_state = pi.read(PIN_BTN)
+def myISR():
+    """Callback function to be executed on button press (Falling Edge)"""
+    global led_color
 
-    if btn_state == 0:
-        # Color cycling (0~7)
-        led_color = (led_color + 1) % 8
-        # Control LED using RGB bit combinations (0 for ON, 1 for OFF)
-        pi.write(PIN_LEDR, 0 if led_color & 0b100 else 1)
-        pi.write(PIN_LEDG, 0 if led_color & 0b010 else 1)
-        pi.write(PIN_LEDB, 0 if led_color & 0b001 else 1)
-        # Output current color information
-        print(f"[ISR] LED Color changed to {led_color:03b}")
+    # Color cycling (0~7)
+    led_color = (led_color + 1) % 8
 
+    # Determine status via bitwise operations: 0b100(R), 0b010(G), 0b001(B)
+    # RGBLED in gpiozero accepts values from 0 (Off) to 1 (On)
+    r_val = 1 if (led_color & 0b100) else 0
+    g_val = 1 if (led_color & 0b010) else 0
+    b_val = 1 if (led_color & 0b001) else 0
+
+    led.color = (r_val, g_val, b_val)
+    print(f"[ISR] LED Color changed to {led_color:03b}")
+
+# 3. Register myISR to be called when the button is pressed (Interrupt)
+btn.when_pressed = myISR
 
 if __name__ == "__main__":
-    pi = pigpio.pi()
-    if not pi.connected:
-        print("pigpio demon error!", file=sys.stderr)
-        sys.exit(1)
-
-    # Set PIN_BTN to input mode
-    pi.set_mode(PIN_BTN,  pigpio.INPUT)
-    # Set the default state to HIGH by engaging the internal pull-up resistor -> LOW when the button is pressed
-    pi.set_pull_up_down(PIN_BTN, pigpio.PUD_UP)
-
-    pi.set_mode(PIN_LEDR, pigpio.OUTPUT)
-    pi.set_mode(PIN_LEDG, pigpio.OUTPUT)
-    pi.set_mode(PIN_LEDB, pigpio.OUTPUT)
-
-    # Turn off all 3 LEDs (1 is off state; circuit turns on when LOW)
-    pi.write(PIN_LEDR, 1)
-    pi.write(PIN_LEDG, 1)
-    pi.write(PIN_LEDB, 1)
-
-    # When the button is pressed and a LOW signal is detected, call myISR
-    cb = pi.callback(PIN_BTN, pigpio.FALLING_EDGE, myISR)
-
-    print("!Interrupt!")
+    print("!Interrupt Ready!")
     count = 0
     try:
         while True:
@@ -71,8 +45,15 @@ if __name__ == "__main__":
             print(f"Current seconds: {count:4d} [s]")
             count += 2
             end = time.time()
-            time.sleep((LOOP_PERIOD_MS/1000) - (end - start))
+
+            # Maintain loop period (compensating for execution time)
+            sleep_time = (LOOP_PERIOD_MS / 1000.0) - (end - start)
+            if sleep_time > 0:
+                time.sleep(sleep_time)
+
+    except KeyboardInterrupt:
+        print("\nProgram exiting...")
     finally:
-        cb.cancel()
-        pi.stop()
-        os.system("sudo killall pigpiod")
+        # Turn off the LED and clean up resources upon exit
+        led.close()
+        btn.close()
