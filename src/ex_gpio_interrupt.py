@@ -1,5 +1,4 @@
 import os
-## 백그라운드에서 실행되는 프로그램 -> 사용자가 직접 제어하지 않고, 시스템의 백그라운드에서 실행되면서 특정 기능을 수행하는 프로그램
 os.system("sudo pigpiod")
 
 import time
@@ -19,25 +18,25 @@ last_tick = 0
 def myISR(gpio, level, tick):
     global led_color, last_tick
 
-    # 버튼 눌림이 아닌 경우
+    ## If it is not a button press
     if level != 0:
         return
-    # 디바운싱 : 마지막 눌림과 200ms 이내면 무시
+    # Debouncing: Ignore if within 200ms of the last press
     if pigpio.tickDiff(last_tick, tick) < 200_000:
         return
     last_tick = tick
 
-    # 버튼 상태 확인 
+    # Check button status
     btn_state = pi.read(PIN_BTN)
 
     if btn_state == 0:
-        # 색상 순환 (0~7)
+        # Color cycling (0~7)
         led_color = (led_color + 1) % 8
-        # RGB 비트 조합으로 LED 제어 (0이면 ON, 1이면 OFF)
+        # Control LED using RGB bit combinations (0 for ON, 1 for OFF)
         pi.write(PIN_LEDR, 0 if led_color & 0b100 else 1)
         pi.write(PIN_LEDG, 0 if led_color & 0b010 else 1)
         pi.write(PIN_LEDB, 0 if led_color & 0b001 else 1)
-        # 현재 색상 정보 출력
+        # Output current color information
         print(f"[ISR] LED Color changed to {led_color:03b}")
 
 
@@ -47,21 +46,21 @@ if __name__ == "__main__":
         print("pigpio demon error!", file=sys.stderr)
         sys.exit(1)
 
-    # PIN_BTN을 입력 모드로 설정 
+    # Set PIN_BTN to input mode
     pi.set_mode(PIN_BTN,  pigpio.INPUT)
-    # 내부 풀업 저항을 걸어 기본 상태를 HIGH로 설정 -> 버튼을 누르면 LOW
+    # Set the default state to HIGH by engaging the internal pull-up resistor -> LOW when the button is pressed
     pi.set_pull_up_down(PIN_BTN, pigpio.PUD_UP)
 
     pi.set_mode(PIN_LEDR, pigpio.OUTPUT)
     pi.set_mode(PIN_LEDG, pigpio.OUTPUT)
     pi.set_mode(PIN_LEDB, pigpio.OUTPUT)
 
-    # LED 3개를 모두 끔 (1은 꺼진 상태; LOW에 켜지는 회로)
+    # Turn off all 3 LEDs (1 is off state; circuit turns on when LOW)
     pi.write(PIN_LEDR, 1)
     pi.write(PIN_LEDG, 1)
     pi.write(PIN_LEDB, 1)
 
-    # 버튼이 눌려서 LOW 신호가 감지되면, myISR 호출
+    # When the button is pressed and a LOW signal is detected, call myISR
     cb = pi.callback(PIN_BTN, pigpio.FALLING_EDGE, myISR)
 
     print("!Interrupt!")

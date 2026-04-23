@@ -10,19 +10,19 @@ PIN_LEDR = 16
 PIN_LEDG = 20
 PIN_LEDB = 21
 
-LOOP_PERIOD_MS = 2000 
+LOOP_PERIOD_MS = 2000
 
 led_color = 0
 
 def change_color(pi):
     global led_color
-    # 색상 순환: 0 -> 7
+    # Color cycling: 0 -> 7
     led_color = (led_color + 1) % 8
-    # 각 비트를 R/G/B에 매핑하여 LED 제어
+    # Control LEDs by mapping each bit to R/G/B
     pi.write(PIN_LEDR, 0 if led_color & 0b100 else 1)
     pi.write(PIN_LEDG, 0 if led_color & 0b010 else 1)
     pi.write(PIN_LEDB, 0 if led_color & 0b001 else 1)
-    # 콘솔 출력 (색상 정보)
+    # Console output (color information)
     print(f"[Polling] LED Color: {led_color:03b}")
 
 if __name__ == "__main__":
