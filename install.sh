@@ -20,7 +20,7 @@ if [ $# -ne 1 ]; then
 elif [ $MODE == "--install" ]; then
     echo "install mode"
     sudo apt update
-    sudo apt install -y python-setuptools python3-setuptools vim
+    sudo apt install -y python3-setuptools vim
 
     cd /home/pi
     wget https://github.com/joan2937/pigpio/archive/master.zip
