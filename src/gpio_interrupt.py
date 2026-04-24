@@ -1,9 +1,5 @@
-import os
-os.system("sudo pigpiod")
-
+from gpiozero import Button, LED
 import time
-import sys
-import pigpio
 
 PIN_BTN  = 14
 PIN_LEDR = 16
@@ -12,46 +8,39 @@ PIN_LEDB = 21
 
 LOOP_PERIOD_MS = 2000
 
-led_color = 0
-last_tick = 0
+# Start at state 7 (111 in binary), which matches the 'Off' state in your image
+led_val = 7
 
-def myISR(gpio, level, tick):
-    global led_color, last_tick
+# Setup LEDs.
+# We use default active_high=True so that .value = 1 outputs HIGH (LED OFF)
+# and .value = 0 outputs LOW (LED ON). This perfectly matches your (111) to (000) logic.
+led_r = LED(PIN_LEDR)
+led_g = LED(PIN_LEDG)
+led_b = LED(PIN_LEDB)
 
-    if level != 0:
-        return
+# Initial state (111 -> Off)
+led_r.value = 1
+led_g.value = 1
+led_b.value = 1
 
-    if pigpio.tickDiff(last_tick, tick) < 200_000:
-        return
-    last_tick = tick
+# Button Setup: Internal pull-up, 200ms debouncing
+btn = Button(PIN_BTN, pull_up=True, bounce_time=0.2)
 
-    btn_state = pi.read(PIN_BTN)
+def myISR():
+    """Callback function to be executed on button press"""
+    global led_val
 
-    if btn_state == 0:
-        ################ Write Codes From Here ################
-        # Change colors
-        #######################################################
+    ################ Write Codes From Here ################
+
+    #######################################################
+
+    print(f"[ISR] LED Color changed to {led_r.value}{led_g.value}{led_b.value}")
+
+# Register Interrupt
+btn.when_pressed = myISR
 
 if __name__ == "__main__":
-    pi = pigpio.pi()
-    if not pi.connected:
-        print("pigpio demon error!", file=sys.stderr)
-        sys.exit(1)
-
-    pi.set_mode(PIN_BTN,  pigpio.INPUT)
-    pi.set_pull_up_down(PIN_BTN, pigpio.PUD_UP)
-
-    pi.set_mode(PIN_LEDR, pigpio.OUTPUT)
-    pi.set_mode(PIN_LEDG, pigpio.OUTPUT)
-    pi.set_mode(PIN_LEDB, pigpio.OUTPUT)
-
-    pi.write(PIN_LEDR, 1)
-    pi.write(PIN_LEDG, 1)
-    pi.write(PIN_LEDB, 1)
-
-    cb = pi.callback(PIN_BTN, pigpio.FALLING_EDGE, myISR)
-
-    print("!Interrupt!")
+    print("!Interrupt Ready!")
     count = 0
     try:
         while True:
@@ -59,9 +48,17 @@ if __name__ == "__main__":
             print(f"Current seconds: {count:4d} [s]")
             count += 2
             end = time.time()
-            time.sleep((LOOP_PERIOD_MS/1000) - (end - start))
-    finally:
-        cb.cancel()
-        pi.stop()
-        os.system("sudo killall pigpiod")
 
+            # Maintain loop period
+            sleep_time = (LOOP_PERIOD_MS / 1000.0) - (end - start)
+            if sleep_time > 0:
+                time.sleep(sleep_time)
+
+    except KeyboardInterrupt:
+        print("\nProgram exiting...")
+    finally:
+        # Clean up resources
+        led_r.close()
+        led_g.close()
+        led_b.close()
+        btn.close()
