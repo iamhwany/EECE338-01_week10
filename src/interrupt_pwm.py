@@ -60,7 +60,7 @@ signal.setitimer(signal.ITIMER_REAL, 0.001, 0.001)
 
 if __name__ == "__main__":
     print("!Software PWM using Timer Interrupt Ready!")
-    print("Press the button to change brightness (20% -> 50% -> 80% -> 100%)")
+    print("Press the button to change brightness (20% -> 50% -> 100%)")
 
     try:
         while True:
