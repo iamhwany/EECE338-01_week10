@@ -22,8 +22,8 @@ def btn_isr():
 
     ################ Write Codes From Here ################
     # Goal: Change the duty_cycle when the button is pressed.
-    # Cycle through the following values: 2 -> 5 -> 8 -> 10 -> 2 ...
-    # (This corresponds to 20% -> 50% -> 80% -> 100% brightness)
+    # Cycle through the following values: 2 -> 5 -> 10 -> 2 ...
+    # (This corresponds to 20% -> 50% -> 100% brightness)
 
 
 
@@ -46,8 +46,8 @@ def timer_isr(signum, frame):
 
 
     # Goal 2: Compare pwm_counter with duty_cycle.
-    # Turn the LED ON (led_r.on()) if counter is less than duty_cycle.
-    # Otherwise, turn the LED OFF (led_r.off()).
+    # Turn the LED ON if counter is less than duty_cycle.
+    # Otherwise, turn the LED OFF.
 
 
 
