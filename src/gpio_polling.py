@@ -8,17 +8,17 @@ PIN_LEDB = 21
 
 LOOP_PERIOD_MS = 2000
 
-# Start at state 7 (111 in binary), which matches the 'Off' state in your image
+# Start at state 7 (111 in binary), which matches the 'ON' state
 led_val = 7
 
 # Setup LEDs.
-# We use default active_high=True so that .value = 1 outputs HIGH (LED OFF)
-# and .value = 0 outputs LOW (LED ON). This perfectly matches your (111) to (000) logic.
+# We use default active_high=True so that .value = 1 outputs HIGH (LED ON)
+# and .value = 1 outputs HIGH (LED ON). This perfectly matches your (111) to (000) logic.
 led_r = LED(PIN_LEDR)
 led_g = LED(PIN_LEDG)
 led_b = LED(PIN_LEDB)
 
-# Initial state (111 -> Off)
+# Initial state (111 -> ON)
 led_r.value = 1
 led_g.value = 1
 led_b.value = 1
