@@ -9,10 +9,10 @@ PIN_LEDB = 21
 LOOP_PERIOD_MS = 2000
 led_color = 0
 
-# 1. Individual LED Setup: active_high=False (Circuit turns on at LOW signal)
-led_r = LED(PIN_LEDR, active_high=False)
-led_g = LED(PIN_LEDG, active_high=False)
-led_b = LED(PIN_LEDB, active_high=False)
+# 1. Individual LED Setup: active_high=True (Circuit turns on at HIGH signal)
+led_r = LED(PIN_LEDR, active_high=True)
+led_g = LED(PIN_LEDG, active_high=True)
+led_b = LED(PIN_LEDB, active_high=True)
 
 # Initial state: Turn off all LEDs
 led_r.off()
