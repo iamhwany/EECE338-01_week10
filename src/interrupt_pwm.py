@@ -6,7 +6,7 @@ PIN_BTN  = 14
 PIN_LEDR = 16
 
 # Setup LED and Button
-led_r = LED(PIN_LEDR, active_high=False)
+led_r = LED(PIN_LEDR, active_high=True)
 led_r.off()
 btn = Button(PIN_BTN, pull_up=True, bounce_time=0.2)
 
